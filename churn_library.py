@@ -367,7 +367,7 @@ def save_classification_report(report, filename):
 
 if __name__ == "__main__":
     logger.info("Reading data file...")
-    data = import_data("./data/data.csv")
+    data = import_data("./data/bank_data.csv")
 
     logger.info("Performing EDA...")
     perform_eda(data)

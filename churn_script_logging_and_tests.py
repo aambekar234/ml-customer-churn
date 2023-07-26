@@ -28,7 +28,7 @@ def load_data():
     """
     df = None
     try:
-        df = import_data("./data/data.csv")
+        df = import_data("./data/bank_data.csv")
         logging.info("Testing import_data: SUCCESS")
     except FileNotFoundError as err:
         logging.error("Testing import_eda: The file wasn't found")
