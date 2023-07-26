@@ -39,7 +39,6 @@ def import_data(pth):
             lambda val: 0 if val == "Existing Customer" else 1)
         return df
 
-
 def perform_eda(df):
     '''
     perform eda on df and save figures to images folder
@@ -118,7 +117,6 @@ def encoder_helper(df, category_lst, response):
 
     return df
 
-
 def perform_feature_engineering(df, response):
     '''
     input:
@@ -156,39 +154,31 @@ def perform_feature_engineering(df, response):
     # train test split
     return train_test_split(X, y, test_size=0.3, random_state=42)
 
-
 def classification_report_image(y_train,
                                 y_test,
-                                y_train_preds_lr,
-                                y_train_preds_rf,
-                                y_test_preds_lr,
-                                y_test_preds_rf):
+                                y_train_preds,
+                                y_test_preds,
+                                filename):
     '''
     produces classification report for training and testing results and stores report as image
     in images folder
     input:
             y_train: training response values
             y_test:  test response values
-            y_train_preds_lr: training predictions from logistic regression
-            y_train_preds_rf: training predictions from random forest
-            y_test_preds_lr: test predictions from logistic regression
-            y_test_preds_rf: test predictions from random forest
+            y_train_preds: training predictions 
+            y_test_preds: testing predictions
+            filename: filename string for saving the report
 
     output:
              None
     '''
 
-    # generate test reports and save
+    # generate reports and save
+    target_names = ['0', '1']
     save_classification_report(classification_report(
-        y_test, y_test_preds_rf), "rf_results.png")
+        y_train, y_train_preds,target_names=target_names), f"train_{filename}")
     save_classification_report(classification_report(
-        y_test, y_test_preds_lr), "logistic_results.png")
-
-    # generate train report and save
-    save_classification_report(classification_report(
-        y_train, y_train_preds_rf), "rf_train_results.png")
-    save_classification_report(classification_report(
-        y_train, y_train_preds_lr), "logistic_train_results.png")
+        y_test, y_test_preds,target_names=target_names), f"test_{filename}")
 
 
 def feature_importance_plot(model, X_data, output_pth):
@@ -245,6 +235,20 @@ def train_models(X_train, X_test, y_train, y_test):
     if not os.path.exists("./images/results"):
         os.makedirs("./images/results")
 
+    
+    # tain logistic regression and save model
+    lrc = LogisticRegression(solver='lbfgs', max_iter=3000)
+    lrc.fit(X_train, y_train)
+    y_train_preds_lr = lrc.predict(X_train)
+    y_test_preds_lr = lrc.predict(X_test)
+    joblib.dump(lrc, './models/logistic_model.pkl')
+
+    # generate classification report images for LR
+    classification_report_image(
+        y_train, y_test, y_train_preds_lr, y_test_preds_lr, 
+        "logistic_regression.png")
+
+    # train Random forest with Grid search and save the best model
     rfc = RandomForestClassifier(random_state=42)
     param_grid = {
         'n_estimators': [200, 500],
@@ -252,28 +256,17 @@ def train_models(X_train, X_test, y_train, y_test):
         'max_depth': [4, 5, 100],
         'criterion': ['gini', 'entropy']
     }
+
     cv_rfc = GridSearchCV(estimator=rfc, param_grid=param_grid, cv=5)
-
-    # logistic regression
-    lrc = LogisticRegression(solver='lbfgs', max_iter=3000)
-
-    # train both models
     cv_rfc.fit(X_train, y_train)
-    lrc.fit(X_train, y_train)
-
     y_train_preds_rf = cv_rfc.best_estimator_.predict(X_train)
     y_test_preds_rf = cv_rfc.best_estimator_.predict(X_test)
-
-    y_train_preds_lr = lrc.predict(X_train)
-    y_test_preds_lr = lrc.predict(X_test)
-
-    # save models
     joblib.dump(cv_rfc.best_estimator_, './models/rfc_model.pkl')
-    joblib.dump(lrc, './models/logistic_model.pkl')
-
-    # generate classification report images
+    
+    # generate classification report images for RF
     classification_report_image(
-        y_train, y_test, y_train_preds_lr, y_train_preds_rf, y_test_preds_lr, y_test_preds_rf)
+        y_train, y_test, y_train_preds_rf, y_test_preds_rf, 
+        "random_forest.png")
 
     # plot roc curve
     lrc_plot = plot_roc_curve(lrc, X_test, y_test)
@@ -294,15 +287,18 @@ def save_classification_report(report, filename):
     output:
             None 
     '''
+    
     fig, ax = plt.subplots(figsize=(8, 6))
     ax.axis('off')
-    ax.table(cellText=report.split('\n'), colLabels=[
-             'precision', 'recall', 'f1-score', 'support'], cellLoc='center', loc='center')
-    table = plt.table(cellText=report.split('\n'), colLabels=[
-                      'precision', 'recall', 'f1-score', 'support'], cellLoc='center', loc='center')
-    table.auto_set_font_size(False)
-    table.set_fontsize(10)
-    table.scale(1, 1.2)
+    lines = report.split("\n")
+    table_data = []
+    for line in lines[2:-5]:  # Exclude the first two lines and last five lines
+        row_data = line.split()
+        table_data.append(row_data)
+
+    ax.table(cellText=table_data, 
+    colLabels=["class","precision", "recall", "f1-score", "support"], 
+    cellLoc="center", loc="center")
     plt.tight_layout()
 
     # Save the image as a PNG file

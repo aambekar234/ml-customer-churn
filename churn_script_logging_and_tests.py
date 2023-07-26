@@ -131,7 +131,11 @@ def test_train_models(split_data):
    
     artifacts_list = ["models/logistic_model.pkl", 
     "models/rfc_model.pkl",
-    "images/results/roc_curve_result.png"]
+    "images/results/roc_curve_result.png",
+    "images/results/test_logistic_regression.png",
+    "images/results/train_logistic_regression.png",
+    "images/results/test_random_forest.png",
+    "images/results/train_random_forest.png"]
 
     try:
         for artifact in artifacts_list:
