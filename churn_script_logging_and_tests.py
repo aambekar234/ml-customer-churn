@@ -64,7 +64,7 @@ def test_eda(load_data):
     try:
         for image in image_list:
             assert os.path.exists(os.path.join(figures_path,image)) == True
-            logger.info("Successfully completed test eda!")
+        logger.info("Successfully completed test eda!")
     except AssertionError as err:
         logger.warning("Failed test eda!")
         raise err
@@ -87,9 +87,9 @@ def test_encoder_helper(load_data):
         for column in cat_columns:
             column_name = f"{column}_Churn"
             assert column_name in data.columns
-        logger.info("Successfully completed test encoder_helper")
+        logger.info("Successfully completed test encoder_helper!")
     except AssertionError as err:
-        logger.error("Failed test encoder_helper")
+        logger.error("Failed test encoder_helper!")
         raise err
 
     return data
@@ -115,9 +115,9 @@ def test_perform_feature_engineering(load_data):
         assert X_test.shape[0] > 0
         assert len(y_train) > 0
         assert len(y_test) > 0
-        logger.info("Successfully completed test perform_feature_engineering")
+        logger.info("Successfully completed test perform_feature_engineering!")
     except AssertionError as err:
-        logger.error("Failed test perform_feature_engineering")
+        logger.error("Failed test perform_feature_engineering!")
         raise err
 
 
@@ -135,15 +135,16 @@ def test_train_models(split_data):
     "images/results/test_logistic_regression.png",
     "images/results/train_logistic_regression.png",
     "images/results/test_random_forest.png",
-    "images/results/train_random_forest.png"]
+    "images/results/train_random_forest.png",
+    "images/results/feature_importance.png"]
 
     try:
         for artifact in artifacts_list:
             assert os.path.exists(artifact)
-            logger.info("Successfully completed test train_models!")
+        logger.info("Successfully completed test train_models!")
     except AssertionError as err:
         logger.warning("Failed test train_models!")
         raise err
 
 if __name__ == "__main__":
-    pass
+    pytest.main(["./churn_script_logging_and_tests.py"])

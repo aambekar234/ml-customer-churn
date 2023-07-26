@@ -268,7 +268,7 @@ def train_models(X_train, X_test, y_train, y_test):
         y_train, y_test, y_train_preds_rf, y_test_preds_rf, 
         "random_forest.png")
 
-    # plot roc curve
+    # plot roc curve and save
     lrc_plot = plot_roc_curve(lrc, X_test, y_test)
     plt.figure(figsize=(15, 8))
     ax = plt.gca()
@@ -276,6 +276,39 @@ def train_models(X_train, X_test, y_train, y_test):
                               X_test, y_test, ax=ax, alpha=0.8)
     lrc_plot.plot(ax=ax, alpha=0.8)
     plt.savefig("images/results/roc_curve_result.png", dpi=300)
+    plt.close()
+
+    # plot feature importance and save
+    save_feature_importance_graph(X_train)
+
+def save_feature_importance_graph(df):
+    '''
+    plots feature importance and saves the figure
+    input:
+              df: pandas data frame used for trainig 
+    output:
+              None
+    '''
+    # Sort feature importances in descending order
+    rfc = joblib.load("./models/rfc_model.pkl")
+    feature_importances = rfc.feature_importances_
+    indices = np.argsort(feature_importances)[::-1]
+    # Rearrange feature names so they match the sorted feature importances
+    names = [df.columns[i] for i in indices]
+
+    # Create plot
+    plt.figure(figsize=(30,20))
+
+    # Create plot title
+    plt.title("Feature Importance")
+    plt.ylabel('Importance')
+
+    # Add bars
+    plt.bar(range(df.shape[1]), feature_importances[indices])
+    # Add feature names as x-axis labels
+    plt.xticks(range(df.shape[1]), names, rotation=90);
+    plt.savefig("images/results/feature_importance.png", dpi=300)
+    plt.close()
 
 
 def save_classification_report(report, filename):
@@ -320,3 +353,5 @@ if __name__ == "__main__":
 
     logger.info("Train models and save the artifacts.")
     train_models(X_train, X_Test, y_train, y_test)
+
+    
