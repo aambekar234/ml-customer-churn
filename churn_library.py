@@ -15,6 +15,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import logging.config
 sns.set()
 
 os.environ['QT_QPA_PLATFORM'] = 'offscreen'
@@ -32,8 +33,8 @@ def import_data(pth):
     output:
             df: pandas dataframe
     '''
-    with open(pth) as data-file:
-        df = pd.read_csv(data-file)
+    with open(pth) as fp:
+        df = pd.read_csv(fp)
         df['Churn'] = df['Attrition_Flag'].apply(
             lambda val: 0 if val == "Existing Customer" else 1)
         return df
@@ -48,32 +49,50 @@ def perform_eda(df):
     output:
             None
     '''
-    plt.figure(figsize=(20, 10))
     figures_path = "images/eda/"
+    if not os.path.exists(figures_path):
+        os.makedirs(figures_path)
 
     # churn distrinution
+    plt.figure(figsize=(20, 10))
     fig, ax = plt.subplots()
     df.hist('Churn', ax=ax)
-    fig.savefig(os.path.join(figures_path, 'customer_age_distribution.png'))
+    fig.savefig(os.path.join(figures_path, 'churn_distribution.png'))
+    plt.close()
 
     # customer age distribution
+    plt.figure(figsize=(20, 10))
     fig, ax = plt.subplots()
     df.hist('Customer_Age', ax=ax)
     fig.savefig(os.path.join(figures_path, 'customer_age_distribution.png'))
+    plt.close()
+
 
     # heatmap
+    plt.figure(figsize=(20, 10))
+    sns.heatmap(df.corr(numeric_only=True), annot=False, cmap='Dark2_r', linewidths=2)
+    plt.title("Heatmap")
+    plt.savefig(os.path.join(figures_path,'heatmap.png'))
+    plt.close()
 
     # martial status dstribution
+    plt.figure(figsize=(20, 10))
+    plt.title("Marital status distribution.")
+    fig, ax = plt.subplots()
     fig = df.Marital_Status.value_counts(
         'normalize').plot(kind='bar').get_figure()
-    fig.savefig(os.path.join(figures_path, 'marital_status_distribution.png'))
+    fig.savefig(os.path.join(figures_path, 'marital_status_distribution.png'))  
+    plt.close()
 
     # total transaction distribution
+    plt.figure(figsize=(20, 10))
+    plt.title("Total transaction distribution.")
+    fig, ax = plt.subplots()
     fig = sns.histplot(df['Total_Trans_Ct'],
                        stat='density', kde=True).get_figure()
     fig.savefig(os.path.join(
         figures_path, "total_transaction_distribution.png"))
-
+    plt.close()
 
 def encoder_helper(df, category_lst, response):
     '''
@@ -91,7 +110,7 @@ def encoder_helper(df, category_lst, response):
 
     for category in category_lst:
         lst = []
-        groups = df.groupby(category).mean()[response]
+        groups = df.groupby(category).mean(numeric_only=True)[response]
         for val in df[category]:
             lst.append(groups.loc[val])
 
@@ -114,6 +133,14 @@ def perform_feature_engineering(df, response):
     '''
 
     y = df['Churn']
+    cat_columns = [
+        'Gender',
+        'Education_Level',
+        'Marital_Status',
+        'Income_Category',
+        'Card_Category'
+    ]
+
     keep_cols = ['Customer_Age', 'Dependent_count', 'Months_on_book',
                  'Total_Relationship_Count', 'Months_Inactive_12_mon',
                  'Contacts_Count_12_mon', 'Credit_Limit', 'Total_Revolving_Bal',
@@ -123,7 +150,7 @@ def perform_feature_engineering(df, response):
                  'Income_Category_Churn', 'Card_Category_Churn']
 
     X = pd.DataFrame()
-    data = encoder_helper(data, cat_columns, response)
+    data = encoder_helper(df, cat_columns, response)
     X[keep_cols] = data[keep_cols]
 
     # train test split
@@ -210,6 +237,14 @@ def train_models(X_train, X_test, y_train, y_test):
               None
     '''
     # Grid search, Random forest
+
+    logger.info("Checking necessary directories exist for saving artifacts.")
+    if not os.path.exists("./models/"):
+        os.makedirs("./models")
+
+    if not os.path.exists("./images/results"):
+        os.makedirs("./images/results")
+
     rfc = RandomForestClassifier(random_state=42)
     param_grid = {
         'n_estimators': [200, 500],
@@ -232,13 +267,13 @@ def train_models(X_train, X_test, y_train, y_test):
     y_train_preds_lr = lrc.predict(X_train)
     y_test_preds_lr = lrc.predict(X_test)
 
-    # generate classification report images
-    classification_report_image(
-        y_train, y_test, y_train_preds_lr, y_train_preds_rf, y_test_preds_lr, y_test_preds_rf)
-
     # save models
     joblib.dump(cv_rfc.best_estimator_, './models/rfc_model.pkl')
     joblib.dump(lrc, './models/logistic_model.pkl')
+
+    # generate classification report images
+    classification_report_image(
+        y_train, y_test, y_train_preds_lr, y_train_preds_rf, y_test_preds_lr, y_test_preds_rf)
 
     # plot roc curve
     lrc_plot = plot_roc_curve(lrc, X_test, y_test)
@@ -247,7 +282,7 @@ def train_models(X_train, X_test, y_train, y_test):
     rfc_disp = plot_roc_curve(cv_rfc.best_estimator_,
                               X_test, y_test, ax=ax, alpha=0.8)
     lrc_plot.plot(ax=ax, alpha=0.8)
-    plt.savefig("images/results/roc_cureve_result.png", dpi=300)
+    plt.savefig("images/results/roc_curve_result.png", dpi=300)
 
 
 def save_classification_report(report, filename):
@@ -277,9 +312,7 @@ def save_classification_report(report, filename):
 
 
 if __name__ == "__main__":
-    logger.info()
-
-    ogger.info("Reading data file...")
+    logger.info("Reading data file...")
     data = import_data("./data/data.csv")
 
     logger.info("Performing EDA...")
