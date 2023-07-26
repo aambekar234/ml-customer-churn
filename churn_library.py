@@ -10,7 +10,6 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import normalize
 import joblib
 import pandas as pd
 import numpy as np
@@ -19,6 +18,9 @@ import seaborn as sns
 sns.set()
 
 os.environ['QT_QPA_PLATFORM'] = 'offscreen'
+
+logging.config.fileConfig("log_config.ini")
+logger = logging.getLogger()
 
 
 def import_data(pth):
@@ -30,8 +32,8 @@ def import_data(pth):
     output:
             df: pandas dataframe
     '''
-    with open(pth) as fp:
-        df = pd.read_csv(fp)
+    with open(pth) as data-file:
+        df = pd.read_csv(data-file)
         df['Churn'] = df['Attrition_Flag'].apply(
             lambda val: 0 if val == "Existing Customer" else 1)
         return df
@@ -89,11 +91,13 @@ def encoder_helper(df, category_lst, response):
 
     for category in category_lst:
         lst = []
-        groups = df.groupby(category).mean()['Churn']
+        groups = df.groupby(category).mean()[response]
         for val in df[category]:
             lst.append(groups.loc[val])
 
-        df[f'{category}_Churn'] = lst
+        df[f'{category}_{response}'] = lst
+
+    return df
 
 
 def perform_feature_engineering(df, response):
@@ -119,7 +123,10 @@ def perform_feature_engineering(df, response):
                  'Income_Category_Churn', 'Card_Category_Churn']
 
     X = pd.DataFrame()
-    X[keep_cols] = df[keep_cols]
+    data = encoder_helper(data, cat_columns, response)
+    X[keep_cols] = data[keep_cols]
+
+    # train test split
     return train_test_split(X, y, test_size=0.3, random_state=42)
 
 
@@ -270,4 +277,17 @@ def save_classification_report(report, filename):
 
 
 if __name__ == "__main__":
-    print("Hello")
+    logger.info()
+
+    ogger.info("Reading data file...")
+    data = import_data("./data/data.csv")
+
+    logger.info("Performing EDA...")
+    perform_eda(data)
+
+    logger.info("Splitting data into Train & Test.")
+    X_train, X_Test, y_train, y_test = perform_feature_engineering(
+        data, 'Churn')
+
+    logger.info("Train models and save the artifacts.")
+    train_models(X_train, X_Test, y_train, y_test)
