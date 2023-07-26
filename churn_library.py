@@ -19,6 +19,7 @@ from sklearn.model_selection import train_test_split
 sns.set()
 os.environ['QT_QPA_PLATFORM'] = 'offscreen'
 
+os.makedirs("./logs/")
 logging.config.fileConfig("log_config.ini")
 logger = logging.getLogger()
 
