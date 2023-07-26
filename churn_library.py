@@ -5,19 +5,18 @@ Date: 06/29/2023
 
 # import libraries
 import os
-from sklearn.metrics import plot_roc_curve, classification_report
-from sklearn.model_selection import GridSearchCV
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
+import logging.config
 import joblib
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import logging.config
+from sklearn.metrics import plot_roc_curve, classification_report
+from sklearn.model_selection import GridSearchCV
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
 sns.set()
-
 os.environ['QT_QPA_PLATFORM'] = 'offscreen'
 
 logging.config.fileConfig("log_config.ini")
@@ -38,6 +37,7 @@ def import_data(pth):
         df['Churn'] = df['Attrition_Flag'].apply(
             lambda val: 0 if val == "Existing Customer" else 1)
         return df
+
 
 def perform_eda(df):
     '''
@@ -66,12 +66,16 @@ def perform_eda(df):
     fig.savefig(os.path.join(figures_path, 'customer_age_distribution.png'))
     plt.close()
 
-
     # heatmap
     plt.figure(figsize=(20, 10))
-    sns.heatmap(df.corr(numeric_only=True), annot=False, cmap='Dark2_r', linewidths=2)
+    sns.heatmap(
+        df.corr(
+            numeric_only=True),
+        annot=False,
+        cmap='Dark2_r',
+        linewidths=2)
     plt.title("Heatmap")
-    plt.savefig(os.path.join(figures_path,'heatmap.png'))
+    plt.savefig(os.path.join(figures_path, 'heatmap.png'))
     plt.close()
 
     # martial status dstribution
@@ -80,7 +84,7 @@ def perform_eda(df):
     fig, ax = plt.subplots()
     fig = df.Marital_Status.value_counts(
         'normalize').plot(kind='bar').get_figure()
-    fig.savefig(os.path.join(figures_path, 'marital_status_distribution.png'))  
+    fig.savefig(os.path.join(figures_path, 'marital_status_distribution.png'))
     plt.close()
 
     # total transaction distribution
@@ -93,16 +97,18 @@ def perform_eda(df):
         figures_path, "total_transaction_distribution.png"))
     plt.close()
 
+
 def encoder_helper(df, category_lst, response):
     '''
     helper function to turn each categorical column into a new column with
-    propotion of churn for each category - associated with cell 15 from the notebook
+    propotion of churn for each category - associated with cell 15 from the
+    notebook
 
     input:
             df: pandas dataframe
             category_lst: list of columns that contain categorical features
-            response: string of response name [optional argument that could be used for naming variables or index y column]
-
+            response: string of response name [optional argument that could
+            be used for naming variables or index y column]
     output:
             df: pandas dataframe with new columns for
     '''
@@ -117,19 +123,19 @@ def encoder_helper(df, category_lst, response):
 
     return df
 
+
 def perform_feature_engineering(df, response):
     '''
     input:
               df: pandas dataframe
-              response: string of response name [optional argument that could be used for naming variables or index y column]
-
+              response: string of response name [optional argument that could
+              be used for naming variables or index y column]
     output:
               X_train: X training data
               X_test: X testing data
               y_train: y training data
               y_test: y testing data
     '''
-
     y = df['Churn']
     cat_columns = [
         'Gender',
@@ -139,13 +145,26 @@ def perform_feature_engineering(df, response):
         'Card_Category'
     ]
 
-    keep_cols = ['Customer_Age', 'Dependent_count', 'Months_on_book',
-                 'Total_Relationship_Count', 'Months_Inactive_12_mon',
-                 'Contacts_Count_12_mon', 'Credit_Limit', 'Total_Revolving_Bal',
-                 'Avg_Open_To_Buy', 'Total_Amt_Chng_Q4_Q1', 'Total_Trans_Amt',
-                 'Total_Trans_Ct', 'Total_Ct_Chng_Q4_Q1', 'Avg_Utilization_Ratio',
-                 'Gender_Churn', 'Education_Level_Churn', 'Marital_Status_Churn',
-                 'Income_Category_Churn', 'Card_Category_Churn']
+    keep_cols = [
+        'Customer_Age',
+        'Dependent_count',
+        'Months_on_book',
+        'Total_Relationship_Count',
+        'Months_Inactive_12_mon',
+        'Contacts_Count_12_mon',
+        'Credit_Limit',
+        'Total_Revolving_Bal',
+        'Avg_Open_To_Buy',
+        'Total_Amt_Chng_Q4_Q1',
+        'Total_Trans_Amt',
+        'Total_Trans_Ct',
+        'Total_Ct_Chng_Q4_Q1',
+        'Avg_Utilization_Ratio',
+        'Gender_Churn',
+        'Education_Level_Churn',
+        'Marital_Status_Churn',
+        'Income_Category_Churn',
+        'Card_Category_Churn']
 
     X = pd.DataFrame()
     data = encoder_helper(df, cat_columns, response)
@@ -153,6 +172,7 @@ def perform_feature_engineering(df, response):
 
     # train test split
     return train_test_split(X, y, test_size=0.3, random_state=42)
+
 
 def classification_report_image(y_train,
                                 y_test,
@@ -165,7 +185,7 @@ def classification_report_image(y_train,
     input:
             y_train: training response values
             y_test:  test response values
-            y_train_preds: training predictions 
+            y_train_preds: training predictions
             y_test_preds: testing predictions
             filename: filename string for saving the report
 
@@ -175,10 +195,14 @@ def classification_report_image(y_train,
 
     # generate reports and save
     target_names = ['0', '1']
+    save_classification_report(
+        classification_report(
+            y_train,
+            y_train_preds,
+            target_names=target_names),
+        f"train_{filename}")
     save_classification_report(classification_report(
-        y_train, y_train_preds,target_names=target_names), f"train_{filename}")
-    save_classification_report(classification_report(
-        y_test, y_test_preds,target_names=target_names), f"test_{filename}")
+        y_test, y_test_preds, target_names=target_names), f"test_{filename}")
 
 
 def feature_importance_plot(model, X_data, output_pth):
@@ -235,7 +259,6 @@ def train_models(X_train, X_test, y_train, y_test):
     if not os.path.exists("./images/results"):
         os.makedirs("./images/results")
 
-    
     # tain logistic regression and save model
     lrc = LogisticRegression(solver='lbfgs', max_iter=3000)
     lrc.fit(X_train, y_train)
@@ -245,7 +268,7 @@ def train_models(X_train, X_test, y_train, y_test):
 
     # generate classification report images for LR
     classification_report_image(
-        y_train, y_test, y_train_preds_lr, y_test_preds_lr, 
+        y_train, y_test, y_train_preds_lr, y_test_preds_lr,
         "logistic_regression.png")
 
     # train Random forest with Grid search and save the best model
@@ -262,17 +285,17 @@ def train_models(X_train, X_test, y_train, y_test):
     y_train_preds_rf = cv_rfc.best_estimator_.predict(X_train)
     y_test_preds_rf = cv_rfc.best_estimator_.predict(X_test)
     joblib.dump(cv_rfc.best_estimator_, './models/rfc_model.pkl')
-    
+
     # generate classification report images for RF
     classification_report_image(
-        y_train, y_test, y_train_preds_rf, y_test_preds_rf, 
+        y_train, y_test, y_train_preds_rf, y_test_preds_rf,
         "random_forest.png")
 
     # plot roc curve and save
     lrc_plot = plot_roc_curve(lrc, X_test, y_test)
     plt.figure(figsize=(15, 8))
     ax = plt.gca()
-    rfc_disp = plot_roc_curve(cv_rfc.best_estimator_,
+    plot_roc_curve(cv_rfc.best_estimator_,
                               X_test, y_test, ax=ax, alpha=0.8)
     lrc_plot.plot(ax=ax, alpha=0.8)
     plt.savefig("images/results/roc_curve_result.png", dpi=300)
@@ -281,11 +304,12 @@ def train_models(X_train, X_test, y_train, y_test):
     # plot feature importance and save
     save_feature_importance_graph(X_train)
 
+
 def save_feature_importance_graph(df):
     '''
     plots feature importance and saves the figure
     input:
-              df: pandas data frame used for trainig 
+              df: pandas data frame used for trainig
     output:
               None
     '''
@@ -297,7 +321,7 @@ def save_feature_importance_graph(df):
     names = [df.columns[i] for i in indices]
 
     # Create plot
-    plt.figure(figsize=(30,20))
+    plt.figure(figsize=(30, 20))
 
     # Create plot title
     plt.title("Feature Importance")
@@ -306,7 +330,7 @@ def save_feature_importance_graph(df):
     # Add bars
     plt.bar(range(df.shape[1]), feature_importances[indices])
     # Add feature names as x-axis labels
-    plt.xticks(range(df.shape[1]), names, rotation=90);
+    plt.xticks(range(df.shape[1]), names, rotation=90)
     plt.savefig("images/results/feature_importance.png", dpi=300)
     plt.close()
 
@@ -318,9 +342,9 @@ def save_classification_report(report, filename):
             report: report generated by sklearn classification_report function
             filename: name of the output image file
     output:
-            None 
+            None
     '''
-    
+
     fig, ax = plt.subplots(figsize=(8, 6))
     ax.axis('off')
     lines = report.split("\n")
@@ -329,9 +353,9 @@ def save_classification_report(report, filename):
         row_data = line.split()
         table_data.append(row_data)
 
-    ax.table(cellText=table_data, 
-    colLabels=["class","precision", "recall", "f1-score", "support"], 
-    cellLoc="center", loc="center")
+    ax.table(cellText=table_data,
+             colLabels=["class", "precision", "recall", "f1-score", "support"],
+             cellLoc="center", loc="center")
     plt.tight_layout()
 
     # Save the image as a PNG file
@@ -353,5 +377,3 @@ if __name__ == "__main__":
 
     logger.info("Train models and save the artifacts.")
     train_models(X_train, X_Test, y_train, y_test)
-
-    

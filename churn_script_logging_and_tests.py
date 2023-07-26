@@ -4,18 +4,28 @@ Date: 06/29/2023
 '''
 
 import os
+import logging.config
+import pytest
 from churn_library import perform_eda
 from churn_library import encoder_helper
 from churn_library import perform_feature_engineering
 from churn_library import train_models
 from churn_library import import_data
-import logging.config
-import pytest
+
 logging.config.fileConfig("log_config.ini")
 logger = logging.getLogger()
 
+
 @pytest.fixture
 def load_data():
+    """This function is pytest fixture to load the data file and
+    to retrun pandas dataframe
+
+    Raises:
+        err: FileNotFoundError
+
+    Returns: Pandas dataframe
+    """
     df = None
     try:
         df = import_data("./data/data.csv")
@@ -25,8 +35,16 @@ def load_data():
         raise err
     return df
 
+
 @pytest.fixture
 def split_data(load_data):
+    """This fixture function output of feature engineering function
+
+    Args:
+        load_data (_type_): pytest fixture function
+
+    Returns: Train, test split of data
+    """
     cat_columns = [
         'Gender',
         'Education_Level',
@@ -37,6 +55,7 @@ def split_data(load_data):
 
     data = encoder_helper(load_data, cat_columns, 'Churn')
     return perform_feature_engineering(data, 'Churn')
+
 
 def test_import(load_data):
     '''
@@ -50,6 +69,7 @@ def test_import(load_data):
             "Testing import_data: The file doesn't appear to have rows and columns")
         raise err
 
+
 def test_eda(load_data):
     '''
     test perform eda function
@@ -57,17 +77,21 @@ def test_eda(load_data):
 
     perform_eda(load_data)
     figures_path = "images/eda/"
-    image_list = ['churn_distribution.png', 'heatmap.png', 
-    'marital_status_distribution.png', 'total_transaction_distribution.png', 
-    'customer_age_distribution.png']
+    image_list = [
+        'churn_distribution.png',
+        'heatmap.png',
+        'marital_status_distribution.png',
+        'total_transaction_distribution.png',
+        'customer_age_distribution.png']
 
     try:
         for image in image_list:
-            assert os.path.exists(os.path.join(figures_path,image)) == True
+            assert os.path.exists(os.path.join(figures_path, image))
         logger.info("Successfully completed test eda!")
     except AssertionError as err:
         logger.warning("Failed test eda!")
         raise err
+
 
 def test_encoder_helper(load_data):
     '''
@@ -93,6 +117,7 @@ def test_encoder_helper(load_data):
         raise err
 
     return data
+
 
 def test_perform_feature_engineering(load_data):
     '''
@@ -128,15 +153,15 @@ def test_train_models(split_data):
 
     X_train, X_test, y_train, y_test = split_data
     train_models(X_train, X_test, y_train, y_test)
-   
-    artifacts_list = ["models/logistic_model.pkl", 
-    "models/rfc_model.pkl",
-    "images/results/roc_curve_result.png",
-    "images/results/test_logistic_regression.png",
-    "images/results/train_logistic_regression.png",
-    "images/results/test_random_forest.png",
-    "images/results/train_random_forest.png",
-    "images/results/feature_importance.png"]
+
+    artifacts_list = ["models/logistic_model.pkl",
+                      "models/rfc_model.pkl",
+                      "images/results/roc_curve_result.png",
+                      "images/results/test_logistic_regression.png",
+                      "images/results/train_logistic_regression.png",
+                      "images/results/test_random_forest.png",
+                      "images/results/train_random_forest.png",
+                      "images/results/feature_importance.png"]
 
     try:
         for artifact in artifacts_list:
@@ -145,6 +170,7 @@ def test_train_models(split_data):
     except AssertionError as err:
         logger.warning("Failed test train_models!")
         raise err
+
 
 if __name__ == "__main__":
     pytest.main(["./churn_script_logging_and_tests.py"])

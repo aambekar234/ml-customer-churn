@@ -23,5 +23,5 @@ Data is pulled from this [Kaggle Source!](https://www.kaggle.com/datasets/sakshi
     ```
 - Run unit tests
     ```
-    python churn_script_logging_and_tests
+    python churn_script_logging_and_tests.py
     ```
