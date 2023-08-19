@@ -18,8 +18,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 sns.set()
 os.environ['QT_QPA_PLATFORM'] = 'offscreen'
-
-os.makedirs("./logs/")
+if not os.path.exists("./logs"):
+    os.makedirs("./logs/")
 logging.config.fileConfig("log_config.ini")
 logger = logging.getLogger()
 
