@@ -25,3 +25,14 @@ Data is pulled from this [Kaggle Source!](https://www.kaggle.com/datasets/sakshi
     ```
     python churn_script_logging_and_tests.py
     ```
+
+## Files in the Repo
+
+- data
+    - bank_data.csv (*data file*)
+- churn_library.py (*source code*)
+- churn_notebook.ipynb (*Ipython notebook of the experiment*)
+- churn_script_logging_and_tests.py (*unit tests*)
+- environment.yml (*conda environment file*)
+- log_config.ini (*application logs configuration file*)
+- README.md 

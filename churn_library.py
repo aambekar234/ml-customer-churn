@@ -26,7 +26,7 @@ logger = logging.getLogger()
 
 def import_data(pth):
     '''
-    returns dataframe for the csv found at pth
+    returns dataframe for the csv data file found at pth
 
     input:
             pth: a path to the csv
@@ -127,6 +127,8 @@ def encoder_helper(df, category_lst, response):
 
 def perform_feature_engineering(df, response):
     '''
+    performs feature engineering of the dataframe, encodes the categorical 
+    coulmns 
     input:
               df: pandas dataframe
               response: string of response name [optional argument that could
@@ -366,6 +368,10 @@ def save_classification_report(report, filename):
 
 
 if __name__ == "__main__":
+    '''
+        Entry point of the script
+    '''
+
     logger.info("Reading data file...")
     data = import_data("./data/bank_data.csv")
 
